@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "648842993184",
+    "project_id": "do-you-63ac5",
+    "storage_bucket": "do-you-63ac5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:648842993184:android:84a4d3e20b7e56bc0e2645",
+        "android_client_info": {
+          "package_name": "com.doyou.parentalcontrol"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbMpM7Gxex_-45b0uI6mfY0MvOv9jE5Oo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
