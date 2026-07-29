@@ -4,10 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/sos_alert_model.dart';
+import '../../models/child_device_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_device_provider.dart';
 import '../../services/firestore_service.dart';
 import '../pairing/pairing_screen.dart';
+import 'family_management_screen.dart';
 import 'remote_controls_tab.dart';
 import 'live_map_tab.dart';
 import 'usage_stats_tab.dart';
@@ -21,15 +23,16 @@ class ParentDashboard extends StatefulWidget {
 
 class _ParentDashboardState extends State<ParentDashboard> {
   int _currentIndex = 0;
-  final String _sampleDeviceId = 'device_demo_01';
   final FirestoreService _firestoreService = FirestoreService();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ChildDeviceProvider>(context, listen: false)
-          .listenToChildDevice(_sampleDeviceId);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final familyId = authProvider.userModel?.familyId ?? 'fam_demo';
+      final childProvider = Provider.of<ChildDeviceProvider>(context, listen: false);
+      childProvider.listenToFamilyDevices(familyId);
     });
   }
 
@@ -37,12 +40,13 @@ class _ParentDashboardState extends State<ParentDashboard> {
   Widget build(BuildContext context) {
     final childProvider = Provider.of<ChildDeviceProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
-    final device = childProvider.childDevice;
+    final devices = childProvider.familyDevices;
+    final activeDevice = devices.isNotEmpty ? devices.first : childProvider.childDevice;
 
     final List<Widget> tabs = [
-      _buildFamilyLinkOverviewTab(device),
-      RemoteControlsTab(deviceId: _sampleDeviceId),
-      LiveMapTab(device: device),
+      _buildFamilyLinkOverviewTab(activeDevice, devices),
+      RemoteControlsTab(deviceId: activeDevice?.deviceId ?? 'device_demo'),
+      LiveMapTab(device: activeDevice),
       const UsageStatsTab(),
     ];
 
@@ -66,7 +70,18 @@ class _ParentDashboardState extends State<ParentDashboard> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.manage_accounts_outlined, color: AppTheme.googleBlue),
+            tooltip: 'Manage Family Devices',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FamilyManagementScreen()),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.person_add_outlined, color: AppTheme.googleBlue),
+            tooltip: 'Pair Device',
             onPressed: () {
               Navigator.push(
                 context,
@@ -175,19 +190,46 @@ class _ParentDashboardState extends State<ParentDashboard> {
     );
   }
 
-  Widget _buildFamilyLinkOverviewTab(dynamic device) {
+  Widget _buildFamilyLinkOverviewTab(ChildDeviceModel? device, List<ChildDeviceModel> realDevices) {
     final int usedMinutes = device?.usedMinutesToday ?? 45;
     final int limitMinutes = device?.dailyTimeLimitMinutes ?? 120;
     final double progress = (usedMinutes / limitMinutes).clamp(0.0, 1.0);
     final bool isLocked = device?.isLocked ?? false;
     final bool isOnline = device?.isOnline ?? true;
+    final String devId = device?.deviceId ?? 'device_demo';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(18.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Real-time Device Status Card (Google Family Link Style)
+          // Manage Family Devices Link Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'My Kids (${realDevices.length})',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF202124),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const FamilyManagementScreen()),
+                  );
+                },
+                icon: const Icon(Icons.settings_outlined, size: 18),
+                label: const Text('Manage Kids'),
+              )
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // 1. Real-time Device Status Card (Strictly Real Devices)
           Card(
             child: Padding(
               padding: const EdgeInsets.all(20.0),
@@ -226,7 +268,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          device?.childName ?? "Alex's Galaxy Phone",
+                          device?.childName ?? "Alex's Phone",
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -252,11 +294,6 @@ class _ParentDashboardState extends State<ParentDashboard> {
                               ),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 2),
-                        const Text(
-                          'Last synced: Just now',
-                          style: TextStyle(color: Color(0xFF70757A), fontSize: 12),
                         ),
                       ],
                     ),
@@ -306,20 +343,15 @@ class _ParentDashboardState extends State<ParentDashboard> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '${limitMinutes - usedMinutes} minutes remaining before bedtime lock.',
-                    style: const TextStyle(color: Color(0xFF5F6368), fontSize: 13),
-                  ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 20),
 
-          // 3. Quick Action Grid (Google Family Link Style)
+          // 3. 6 NEW FUNCTIONAL CONTROL TOOLS GRID
           Text(
-            'Quick Controls',
+            '6 Remote Hardware Tools',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -334,38 +366,70 @@ class _ParentDashboardState extends State<ParentDashboard> {
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.35,
+            childAspectRatio: 1.3,
             children: [
-              _buildFamilyLinkActionCard(
-                icon: isLocked ? Icons.lock_open_rounded : Icons.lock_rounded,
-                title: isLocked ? 'Unlock Phone' : 'Lock Phone',
-                subtitle: isLocked ? 'Currently Locked' : 'Instant Lock',
-                color: isLocked ? AppTheme.accentGreen : AppTheme.alertRed,
+              // Tool 1: Wi-Fi Kill Switch
+              _buildToolCard(
+                icon: (device?.isWifiDisabled ?? false) ? Icons.wifi_off_rounded : Icons.wifi_rounded,
+                title: 'Wi-Fi Kill',
+                subtitle: (device?.isWifiDisabled ?? false) ? 'Disabled' : 'Active',
+                color: (device?.isWifiDisabled ?? false) ? AppTheme.alertRed : AppTheme.googleBlue,
                 onTap: () {
                   final p = Provider.of<ChildDeviceProvider>(context, listen: false);
-                  p.toggleRemoteLock(_sampleDeviceId, !isLocked);
+                  p.toggleWifiKill(devId, device?.isWifiDisabled ?? false);
                 },
               ),
-              _buildFamilyLinkActionCard(
-                icon: Icons.timer_outlined,
-                title: 'Screen Limits',
-                subtitle: 'Daily Quota',
+              // Tool 2: Remote Mute / Ringer Mode
+              _buildToolCard(
+                icon: (device?.isMuted ?? false) ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+                title: 'Remote Mute',
+                subtitle: (device?.isMuted ?? false) ? 'Silenced' : 'Normal',
+                color: (device?.isMuted ?? false) ? AppTheme.alertRed : AppTheme.accentGreen,
+                onTap: () {
+                  final p = Provider.of<ChildDeviceProvider>(context, listen: false);
+                  p.toggleRingerMute(devId, device?.isMuted ?? false);
+                },
+              ),
+              // Tool 3: Remote Camera Lock
+              _buildToolCard(
+                icon: (device?.isCameraDisabled ?? false) ? Icons.no_photography_rounded : Icons.camera_alt_rounded,
+                title: 'Camera Lock',
+                subtitle: (device?.isCameraDisabled ?? false) ? 'Camera Disabled' : 'Allowed',
+                color: (device?.isCameraDisabled ?? false) ? AppTheme.alertRed : AppTheme.warningAmber,
+                onTap: () {
+                  final p = Provider.of<ChildDeviceProvider>(context, listen: false);
+                  p.toggleCameraLock(devId, device?.isCameraDisabled ?? false);
+                },
+              ),
+              // Tool 4: Instant Siren Ring Alarm
+              _buildToolCard(
+                icon: (device?.isSirenActive ?? false) ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
+                title: 'Instant Siren Alarm',
+                subtitle: (device?.isSirenActive ?? false) ? 'ALARM RINGING!' : 'Ring Phone',
+                color: (device?.isSirenActive ?? false) ? AppTheme.alertRed : AppTheme.googleBlue,
+                onTap: () {
+                  final p = Provider.of<ChildDeviceProvider>(context, listen: false);
+                  p.toggleSirenAlarm(devId, !(device?.isSirenActive ?? false));
+                },
+              ),
+              // Tool 5: Bedtime Schedule Lock
+              _buildToolCard(
+                icon: Icons.bedtime_rounded,
+                title: 'Bedtime Lock',
+                subtitle: '${device?.bedtimeStart ?? "21:00"} - ${device?.bedtimeEnd ?? "07:00"}',
                 color: AppTheme.googleBlue,
                 onTap: () => setState(() => _currentIndex = 1),
               ),
-              _buildFamilyLinkActionCard(
-                icon: Icons.block_flipped,
-                title: 'App Blocker',
-                subtitle: 'Manage Apps',
-                color: AppTheme.warningAmber,
-                onTap: () => setState(() => _currentIndex = 1),
-              ),
-              _buildFamilyLinkActionCard(
-                icon: Icons.location_on_outlined,
-                title: 'Live Location',
-                subtitle: 'GPS Map',
-                color: AppTheme.accentGreen,
-                onTap: () => setState(() => _currentIndex = 2),
+              // Tool 6: App Installation Blocker
+              _buildToolCard(
+                icon: (device?.isInstallBlocked ?? false) ? Icons.app_blocking_rounded : Icons.system_update_rounded,
+                title: 'Install Blocker',
+                subtitle: (device?.isInstallBlocked ?? false) ? 'Installs Blocked' : 'Allowed',
+                color: (device?.isInstallBlocked ?? false) ? AppTheme.alertRed : AppTheme.accentGreen,
+                onTap: () {
+                  final p = Provider.of<ChildDeviceProvider>(context, listen: false);
+                  p.toggleAppInstallBlock(devId, device?.isInstallBlocked ?? false);
+                },
               ),
             ],
           ),
@@ -374,7 +438,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
     );
   }
 
-  Widget _buildFamilyLinkActionCard({
+  Widget _buildToolCard({
     required IconData icon,
     required String title,
     required String subtitle,
@@ -385,7 +449,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
       onTap: onTap,
       child: Card(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(14.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -395,17 +459,19 @@ class _ParentDashboardState extends State<ParentDashboard> {
                 radius: 20,
                 child: Icon(icon, color: color, size: 22),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Text(
                 title,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: const Color(0xFF202124),
                 ),
               ),
               Text(
                 subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(color: Color(0xFF70757A), fontSize: 12),
               ),
             ],

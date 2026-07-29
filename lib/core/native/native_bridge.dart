@@ -9,11 +9,63 @@ class NativeBridge {
     try {
       final bool result = await _channel.invokeMethod('lockScreen');
       return result;
-    } on PlatformException catch (e) {
-      print('NativeBridge lockScreen error: ${e.message}');
-      return false;
     } catch (e) {
-      print('NativeBridge generic error: $e');
+      print('NativeBridge lockScreen error: $e');
+      return false;
+    }
+  }
+
+  /// 1. Remote Camera Lock (DevicePolicyManager.setCameraDisabled)
+  static Future<bool> setCameraDisabled(bool disabled) async {
+    try {
+      final bool result = await _channel.invokeMethod('setCameraDisabled', {'disabled': disabled});
+      return result;
+    } catch (e) {
+      print('NativeBridge setCameraDisabled error: $e');
+      return false;
+    }
+  }
+
+  /// 2. Remote Mute / Ringer Mode Control
+  static Future<bool> setRingerMute(bool mute) async {
+    try {
+      final bool result = await _channel.invokeMethod('setRingerMute', {'mute': mute});
+      return result;
+    } catch (e) {
+      print('NativeBridge setRingerMute error: $e');
+      return false;
+    }
+  }
+
+  /// 3. Wi-Fi Kill Switch
+  static Future<bool> toggleWifi(bool enable) async {
+    try {
+      final bool result = await _channel.invokeMethod('toggleWifi', {'enable': enable});
+      return result;
+    } catch (e) {
+      print('NativeBridge toggleWifi error: $e');
+      return false;
+    }
+  }
+
+  /// 4. Instant Siren Alarm Play
+  static Future<bool> playSirenAlarm() async {
+    try {
+      final bool result = await _channel.invokeMethod('playSirenAlarm');
+      return result;
+    } catch (e) {
+      print('NativeBridge playSirenAlarm error: $e');
+      return false;
+    }
+  }
+
+  /// Stop Siren Alarm
+  static Future<bool> stopSirenAlarm() async {
+    try {
+      final bool result = await _channel.invokeMethod('stopSirenAlarm');
+      return result;
+    } catch (e) {
+      print('NativeBridge stopSirenAlarm error: $e');
       return false;
     }
   }

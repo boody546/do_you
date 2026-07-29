@@ -111,7 +111,7 @@ class FirestoreService {
     }
   }
 
-  /// Stream child device details for parent dashboard
+  /// Stream single child device state
   Stream<ChildDeviceModel?> streamChildDevice(String deviceId) {
     return _db
         .collection(AppConstants.childDevicesCollection)
@@ -123,6 +123,105 @@ class FirestoreService {
       }
       return null;
     });
+  }
+
+  /// Stream strictly REAL linked child devices for Parent (NO Dummy Devices!)
+  Stream<List<ChildDeviceModel>> streamFamilyChildDevices(String familyId) {
+    return _db
+        .collection(AppConstants.familiesCollection)
+        .doc(familyId)
+        .snapshots()
+        .asyncMap((familySnap) async {
+      if (!familySnap.exists || familySnap.data() == null) return [];
+
+      final family = FamilyModel.fromMap(familySnap.data()!, familySnap.id);
+      if (family.childDeviceIds.isEmpty) return [];
+
+      final List<ChildDeviceModel> devices = [];
+      for (String devId in family.childDeviceIds) {
+        final devDoc = await _db
+            .collection(AppConstants.childDevicesCollection)
+            .doc(devId)
+            .get();
+        if (devDoc.exists && devDoc.data() != null) {
+          devices.add(ChildDeviceModel.fromMap(devDoc.data()!, devDoc.id));
+        }
+      }
+      return devices;
+    });
+  }
+
+  /// Manage Children - Rename Child Device
+  Future<void> renameChildDevice(String deviceId, String newName) async {
+    await _db
+        .collection(AppConstants.childDevicesCollection)
+        .doc(deviceId)
+        .update({'childName': newName});
+  }
+
+  /// Manage Children - Unpair & Remove Child Device
+  Future<void> unpairChildDevice(String familyId, String deviceId) async {
+    await _db.collection(AppConstants.familiesCollection).doc(familyId).update({
+      'childDeviceIds': FieldValue.arrayRemove([deviceId])
+    });
+
+    await _db
+        .collection(AppConstants.childDevicesCollection)
+        .doc(deviceId)
+        .delete();
+  }
+
+  // --- 6 NEW CONTROL TOOL FIRESTORE UPDATES ---
+
+  /// 1. Wi-Fi Kill Switch
+  Future<void> toggleWifiKill(String deviceId, bool disableWifi) async {
+    await _db
+        .collection(AppConstants.childDevicesCollection)
+        .doc(deviceId)
+        .update({'isWifiDisabled': disableWifi});
+  }
+
+  /// 2. Remote Mute / Ringer Control
+  Future<void> toggleRingerMute(String deviceId, bool isMuted) async {
+    await _db
+        .collection(AppConstants.childDevicesCollection)
+        .doc(deviceId)
+        .update({'isMuted': isMuted});
+  }
+
+  /// 3. Remote Camera Lock
+  Future<void> toggleCameraLock(String deviceId, bool disableCamera) async {
+    await _db
+        .collection(AppConstants.childDevicesCollection)
+        .doc(deviceId)
+        .update({'isCameraDisabled': disableCamera});
+  }
+
+  /// 4. Instant Siren Phone Alarm
+  Future<void> toggleSirenAlarm(String deviceId, bool active) async {
+    await _db
+        .collection(AppConstants.childDevicesCollection)
+        .doc(deviceId)
+        .update({'isSirenActive': active});
+  }
+
+  /// 5. Bedtime Schedule Lock
+  Future<void> setBedtimeSchedule(String deviceId, String start, String end) async {
+    await _db
+        .collection(AppConstants.childDevicesCollection)
+        .doc(deviceId)
+        .update({
+      'bedtimeStart': start,
+      'bedtimeEnd': end,
+    });
+  }
+
+  /// 6. App Installation Blocker
+  Future<void> toggleAppInstallBlock(String deviceId, bool block) async {
+    await _db
+        .collection(AppConstants.childDevicesCollection)
+        .doc(deviceId)
+        .update({'isInstallBlocked': block});
   }
 
   /// Trigger Child SOS Emergency Alert to Firestore

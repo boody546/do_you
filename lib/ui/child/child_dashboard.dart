@@ -26,6 +26,10 @@ class _ChildDashboardState extends State<ChildDashboard> {
   void initState() {
     super.initState();
     _checkNativePermissions();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final p = Provider.of<ChildDeviceProvider>(context, listen: false);
+      p.listenToChildDevice('device_child_demo');
+    });
   }
 
   Future<void> _checkNativePermissions() async {
@@ -40,7 +44,7 @@ class _ChildDashboardState extends State<ChildDashboard> {
   Future<void> _triggerSOSAlert() async {
     setState(() => _isSendingSOS = true);
     final pos = await LocationService.getCurrentPosition();
-    
+
     await _firestoreService.sendSOSAlert(
       deviceId: 'device_child_demo',
       childName: 'Alex 🚀',
@@ -54,7 +58,7 @@ class _ChildDashboardState extends State<ChildDashboard> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('🚨 SOS Alert Sent to Parents Successfully!'),
-          backgroundColor: AppTheme.alertRose,
+          backgroundColor: AppTheme.alertRed,
         ),
       );
     }
@@ -63,7 +67,23 @@ class _ChildDashboardState extends State<ChildDashboard> {
   @override
   Widget build(BuildContext context) {
     final childProvider = Provider.of<ChildDeviceProvider>(context);
+    final device = childProvider.childDevice;
     final isLocked = childProvider.isLocked;
+    final isSirenActive = device?.isSirenActive ?? false;
+
+    // Realtime Siren Alarm Hardware Trigger
+    if (isSirenActive) {
+      NativeBridge.playSirenAlarm();
+    } else {
+      NativeBridge.stopSirenAlarm();
+    }
+
+    // Realtime Camera Lock Hardware Trigger
+    if (device?.isCameraDisabled ?? false) {
+      NativeBridge.setCameraDisabled(true);
+    } else {
+      NativeBridge.setCameraDisabled(false);
+    }
 
     if (isLocked) {
       return const LockOverlayScreen();
@@ -102,6 +122,29 @@ class _ChildDashboardState extends State<ChildDashboard> {
             padding: const EdgeInsets.all(20.0),
             child: Column(
               children: [
+                if (isSirenActive) ...[
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.alertRed,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Row(
+                      children: const [
+                        Text('🔊 🚨', style: TextStyle(fontSize: 28)),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'SIREN ALARM RINGING! Parent is locating this phone.',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 // Playful Mascot Banner
                 Container(
                   padding: const EdgeInsets.all(20),
@@ -224,7 +267,7 @@ class _ChildDashboardState extends State<ChildDashboard> {
                       child: _buildPlayfulStatCard(
                         emoji: '⏳',
                         title: 'Time Used',
-                        value: '45 Mins',
+                        value: '${device?.usedMinutesToday ?? 45} Mins',
                         color: const Color(0xFF38BDF8),
                       ),
                     ),
@@ -233,7 +276,7 @@ class _ChildDashboardState extends State<ChildDashboard> {
                       child: _buildPlayfulStatCard(
                         emoji: '⚡️',
                         title: 'Battery',
-                        value: '95%',
+                        value: '${device?.batteryLevel ?? 95}%',
                         color: const Color(0xFF4ADE80),
                       ),
                     ),

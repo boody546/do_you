@@ -12,6 +12,15 @@ class ChildDeviceModel {
   final double longitude;
   final DateTime lastSeen;
 
+  // 6 New Remote Control Tool Settings
+  final bool isWifiDisabled;
+  final bool isMuted;
+  final bool isCameraDisabled;
+  final bool isSirenActive;
+  final bool isInstallBlocked;
+  final String bedtimeStart;
+  final String bedtimeEnd;
+
   ChildDeviceModel({
     required this.deviceId,
     required this.childName,
@@ -25,6 +34,13 @@ class ChildDeviceModel {
     required this.latitude,
     required this.longitude,
     required this.lastSeen,
+    this.isWifiDisabled = false,
+    this.isMuted = false,
+    this.isCameraDisabled = false,
+    this.isSirenActive = false,
+    this.isInstallBlocked = false,
+    this.bedtimeStart = '21:00',
+    this.bedtimeEnd = '07:00',
   });
 
   Map<String, dynamic> toMap() {
@@ -41,6 +57,13 @@ class ChildDeviceModel {
       'latitude': latitude,
       'longitude': longitude,
       'lastSeen': lastSeen.toIso8601String(),
+      'isWifiDisabled': isWifiDisabled,
+      'isMuted': isMuted,
+      'isCameraDisabled': isCameraDisabled,
+      'isSirenActive': isSirenActive,
+      'isInstallBlocked': isInstallBlocked,
+      'bedtimeStart': bedtimeStart,
+      'bedtimeEnd': bedtimeEnd,
     };
   }
 
@@ -49,7 +72,7 @@ class ChildDeviceModel {
       deviceId: id,
       childName: map['childName'] ?? 'Child Device',
       deviceModel: map['deviceModel'] ?? 'Android Phone',
-      batteryLevel: (map['batteryLevel'] ?? 85) as int,
+      batteryLevel: (map['batteryLevel'] ?? 88) as int,
       isLocked: map['isLocked'] ?? false,
       isOnline: map['isOnline'] ?? true,
       dailyTimeLimitMinutes: (map['dailyTimeLimitMinutes'] ?? 120) as int,
@@ -60,6 +83,13 @@ class ChildDeviceModel {
       lastSeen: map['lastSeen'] != null
           ? DateTime.parse(map['lastSeen'])
           : DateTime.now(),
+      isWifiDisabled: map['isWifiDisabled'] ?? false,
+      isMuted: map['isMuted'] ?? false,
+      isCameraDisabled: map['isCameraDisabled'] ?? false,
+      isSirenActive: map['isSirenActive'] ?? false,
+      isInstallBlocked: map['isInstallBlocked'] ?? false,
+      bedtimeStart: map['bedtimeStart'] ?? '21:00',
+      bedtimeEnd: map['bedtimeEnd'] ?? '07:00',
     );
   }
 }

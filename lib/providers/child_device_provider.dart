@@ -9,16 +9,20 @@ class ChildDeviceProvider extends ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
 
   ChildDeviceModel? _childDevice;
+  List<ChildDeviceModel> _familyDevices = [];
   List<AppUsageItem> _appUsageList = [];
   bool _isLoading = false;
+  
   StreamSubscription<ChildDeviceModel?>? _deviceSubscription;
+  StreamSubscription<List<ChildDeviceModel>>? _familyDevicesSubscription;
 
   ChildDeviceModel? get childDevice => _childDevice;
+  List<ChildDeviceModel> get familyDevices => _familyDevices;
   List<AppUsageItem> get appUsageList => _appUsageList;
   bool get isLoading => _isLoading;
   bool get isLocked => _childDevice?.isLocked ?? false;
 
-  /// Start listening to child device state in Firestore
+  /// Start listening to single child device state in Firestore (Memory Safe)
   void listenToChildDevice(String deviceId) {
     _deviceSubscription?.cancel();
     _deviceSubscription = _firestoreService.streamChildDevice(deviceId).listen((device) {
@@ -27,7 +31,16 @@ class ChildDeviceProvider extends ChangeNotifier {
     });
   }
 
-  /// Toggle instant screen lock from Parent App
+  /// Start listening to strictly REAL paired children devices for Parent (Memory Safe)
+  void listenToFamilyDevices(String familyId) {
+    _familyDevicesSubscription?.cancel();
+    _familyDevicesSubscription = _firestoreService.streamFamilyChildDevices(familyId).listen((devices) {
+      _familyDevices = devices;
+      notifyListeners();
+    });
+  }
+
+  /// Toggle instant screen lock
   Future<void> toggleRemoteLock(String deviceId, bool lockState) async {
     await _firestoreService.setDeviceLockState(deviceId, lockState);
   }
@@ -40,6 +53,50 @@ class ChildDeviceProvider extends ChangeNotifier {
   /// Toggle specific app block status
   Future<void> toggleAppBlock(String deviceId, String packageName, bool currentBlocked) async {
     await _firestoreService.toggleAppBlock(deviceId, packageName, !currentBlocked);
+  }
+
+  // --- 6 NEW REMOTE CONTROL TOOLS ---
+
+  /// 1. Wi-Fi Kill Switch
+  Future<void> toggleWifiKill(String deviceId, bool currentDisabled) async {
+    await _firestoreService.toggleWifiKill(deviceId, !currentDisabled);
+  }
+
+  /// 2. Remote Mute / Ringer Control
+  Future<void> toggleRingerMute(String deviceId, bool currentMuted) async {
+    await _firestoreService.toggleRingerMute(deviceId, !currentMuted);
+  }
+
+  /// 3. Remote Camera Lock
+  Future<void> toggleCameraLock(String deviceId, bool currentDisabled) async {
+    await _firestoreService.toggleCameraLock(deviceId, !currentDisabled);
+  }
+
+  /// 4. Instant Siren Alarm
+  Future<void> toggleSirenAlarm(String deviceId, bool active) async {
+    await _firestoreService.toggleSirenAlarm(deviceId, active);
+  }
+
+  /// 5. Bedtime Schedule Lock
+  Future<void> setBedtimeSchedule(String deviceId, String start, String end) async {
+    await _firestoreService.setBedtimeSchedule(deviceId, start, end);
+  }
+
+  /// 6. App Installation Blocker
+  Future<void> toggleAppInstallBlock(String deviceId, bool currentBlocked) async {
+    await _firestoreService.toggleAppInstallBlock(deviceId, !currentBlocked);
+  }
+
+  // --- MANAGE CHILDREN ---
+
+  /// Rename Child Device
+  Future<void> renameChildDevice(String deviceId, String newName) async {
+    await _firestoreService.renameChildDevice(deviceId, newName);
+  }
+
+  /// Unpair Child Device
+  Future<void> unpairChildDevice(String familyId, String deviceId) async {
+    await _firestoreService.unpairChildDevice(familyId, deviceId);
   }
 
   /// Load daily app usage metrics via Native Kotlin Channel
@@ -58,16 +115,16 @@ class ChildDeviceProvider extends ChangeNotifier {
       );
     }).toList();
 
-    // Sort by duration descending
     _appUsageList.sort((a, b) => b.durationMinutes.compareTo(a.durationMinutes));
-
     _isLoading = false;
     notifyListeners();
   }
 
   @override
   void dispose() {
+    // Explicit Stream Cancellation to Prevent Memory Leaks & Freezes
     _deviceSubscription?.cancel();
+    _familyDevicesSubscription?.cancel();
     super.dispose();
   }
 }

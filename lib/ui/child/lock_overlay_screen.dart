@@ -15,7 +15,9 @@ class LockOverlayScreen extends StatefulWidget {
 
 class _LockOverlayScreenState extends State<LockOverlayScreen> {
   bool _isSendingSOS = false;
+  final TextEditingController _pinController = TextEditingController();
   final FirestoreService _firestoreService = FirestoreService();
+  final String _masterPin = '1234'; // Secret Master Override PIN
 
   Future<void> _sendLockSOS() async {
     setState(() => _isSendingSOS = true);
@@ -34,16 +36,57 @@ class _LockOverlayScreenState extends State<LockOverlayScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('🚨 Emergency SOS Sent to Parents!'),
-          backgroundColor: AppTheme.alertRose,
+          backgroundColor: AppTheme.alertRed,
         ),
       );
     }
   }
 
+  void _showMasterPinDialog(BuildContext context) {
+    _pinController.clear();
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Parent Master Override PIN'),
+        content: TextField(
+          controller: _pinController,
+          keyboardType: TextInputType.number,
+          obscureText: true,
+          maxLength: 4,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.plusJakartaSans(fontSize: 24, letterSpacing: 8, fontWeight: FontWeight.bold),
+          decoration: const InputDecoration(
+            hintText: '****',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (_pinController.text == _masterPin) {
+                await _firestoreService.setDeviceLockState('device_child_demo', false);
+                Navigator.pop(dialogCtx);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Incorrect Master PIN Code!')),
+                );
+              }
+            },
+            child: const Text('Unlock Device'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async => false, // Non-dismissible full-screen lock
+      onWillPop: () async => false, // Non-dismissible unbreakable full-screen lock
       child: Scaffold(
         body: Container(
           width: double.infinity,
@@ -104,7 +147,15 @@ class _LockOverlayScreenState extends State<LockOverlayScreen> {
                       height: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 36),
+
+                  // Master PIN Unlock Trigger for Parent
+                  TextButton.icon(
+                    onPressed: () => _showMasterPinDialog(context),
+                    icon: const Icon(Icons.key, color: AppTheme.googleBlue),
+                    label: const Text('Parent Master PIN Unlock', style: TextStyle(color: AppTheme.googleBlue, fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 20),
 
                   // Emergency Call Button
                   Container(
@@ -126,7 +177,7 @@ class _LockOverlayScreenState extends State<LockOverlayScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
                   // SOS Button on Lock Overlay
                   _isSendingSOS
