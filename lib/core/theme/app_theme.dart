@@ -17,6 +17,17 @@ class AppTheme {
   static const Color alertRed = Color(0xFFD93025);
   static const Color alertRedLight = Color(0xFFFCE8E6);
 
+  // -------------------------------------------------------------
+  // 🔗 Legacy Aliases (عشان التوافق مع الشاشات القديمة ومنع أخطاء الـ Build)
+  // -------------------------------------------------------------
+  static const Color primaryBlue = googleBlue;
+  static const Color primaryCyan = googleBlue;
+  static const Color darkCard = googleSurface;
+  static const Color accentEmerald = accentGreen;
+  static const Color alertRose = alertRed;
+  static const LinearGradient primaryGradient = familyLinkGradient;
+  // -------------------------------------------------------------
+
   // Linear Gradients
   static const LinearGradient familyLinkGradient = LinearGradient(
     colors: [googleBlue, Color(0xFF4285F4)],
