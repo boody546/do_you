@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/auth_service.dart';
 import '../parent/parent_dashboard.dart';
 import '../pairing/pairing_screen.dart';
 
@@ -19,8 +20,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
 
   bool _isLoginMode = true;
+  bool _isGoogleLoading = false;
   String _selectedRole = AppConstants.roleParent;
 
   @override
@@ -190,33 +193,51 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ] else ...[
-                            // Google One-Tap Style Sign In Button
-                            OutlinedButton.icon(
-                              onPressed: () async {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Google Sign-In Initiated...')),
-                                );
-                              },
-                              icon: Image.network(
-                                'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
-                                height: 22,
-                                errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata, color: AppTheme.googleBlue, size: 28),
-                              ),
-                              label: Text(
-                                'Sign in with Google',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF3C4043),
+                            // Branded Google Sign-In Button
+                            if (_isGoogleLoading)
+                              const Center(child: CircularProgressIndicator())
+                            else
+                              OutlinedButton.icon(
+                                onPressed: () async {
+                                  setState(() => _isGoogleLoading = true);
+                                  try {
+                                    final user = await _authService.signInWithGoogle();
+                                    if (user != null && mounted) {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(builder: (_) => const ParentDashboard()),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Google Sign-In Error: ${e.toString()}')),
+                                      );
+                                    }
+                                  } finally {
+                                    if (mounted) setState(() => _isGoogleLoading = false);
+                                  }
+                                },
+                                icon: Image.network(
+                                  'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
+                                  height: 22,
+                                  errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata, color: AppTheme.googleBlue, size: 28),
+                                ),
+                                label: Text(
+                                  'Sign in with Google',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF3C4043),
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  side: const BorderSide(color: Color(0xFFDADCE0)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
                                 ),
                               ),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                side: const BorderSide(color: Color(0xFFDADCE0)),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                            ),
                             const SizedBox(height: 20),
 
                             Row(
@@ -236,6 +257,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: const TextStyle(color: Color(0xFF202124)),
                               decoration: InputDecoration(
                                 labelText: 'Email Address',
+                                labelStyle: const TextStyle(color: Color(0xFF5F6368)),
                                 prefixIcon: const Icon(Icons.email_outlined, color: AppTheme.googleBlue),
                                 filled: true,
                                 fillColor: const Color(0xFFF1F3F4),
@@ -253,6 +275,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: const TextStyle(color: Color(0xFF202124)),
                               decoration: InputDecoration(
                                 labelText: 'Password',
+                                labelStyle: const TextStyle(color: Color(0xFF5F6368)),
                                 prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.googleBlue),
                                 filled: true,
                                 fillColor: const Color(0xFFF1F3F4),

@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // User profile access
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+    
+    // Families & 6-digit pairing code verification
+    match /families/{familyId} {
+      allow read, write: if true;
+    }
+    
+    // Child device policies & telemetry metrics
+    match /child_devices/{deviceId} {
+      allow read, write: if true;
+    }
+    
+    // App usage stats pushed by child devices
+    match /app_usage_stats/{statId} {
+      allow read, write: if true;
+    }
+    
+    // Remote command execution log
+    match /device_commands/{commandId} {
+      allow read, write: if true;
+    }
+
+    // Child SOS emergency alerts
+    match /sos_alerts/{alertId} {
+      allow read, write: if true;
+    }
+  }
+}
