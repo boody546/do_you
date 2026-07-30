@@ -12,7 +12,20 @@
           "package_name": "com.doyou.parentalcontrol"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "648842993184-7d6tifcknkqbcucnpj8pab69ri8lulfu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.doyou.parentalcontrol",
+            "certificate_hash": "ffac759429e267a6932ac14218dc9b86f7b7b758"
+          }
+        },
+        {
+          "client_id": "648842993184-06mit1tpor7dnelgq8cnrncj30igdnh4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAbMpM7Gxex_-45b0uI6mfY0MvOv9jE5Oo"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "648842993184-06mit1tpor7dnelgq8cnrncj30igdnh4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

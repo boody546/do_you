@@ -6,7 +6,9 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" xmlns:tools="http://schemas.android.com/tools" tools:ignore="ProtectedPermissions" />
-    
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+
     <!-- Location Permissions for GPS Tracking -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -38,6 +40,20 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <!-- Native Accessibility Service for Child Browser URL Monitoring -->
+        <service
+            android:name=".DOYouAccessibilityService"
+            android:label="DO you Web Safety Service"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
 
         <!-- Device Admin Receiver -->
         <receiver

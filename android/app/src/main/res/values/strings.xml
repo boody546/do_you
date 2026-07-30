@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">DO you</string>
-    <string name="admin_description">DO you Device Shield enforcement for screen lock and app usage quota protection.</string>
+    <string name="admin_description">DO you Device Shield enforcement for hardware screen lock, camera protection, and anti-theft wipe.</string>
+    <string name="accessibility_description">DO you Web Safety Service monitors browser activity and blocks unsafe content for child protection.</string>
 </resources>

@@ -9,22 +9,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-  # State Management & Local Storage
   provider: ^6.1.2
   shared_preferences: ^2.2.2
-
-  # Firebase Core & Cloud Services
   firebase_core: ^3.1.0
   firebase_auth: ^5.1.0
   cloud_firestore: ^5.0.1
   google_sign_in: ^6.2.1
-
-  # Sensors, Location & Native Bridge
   geolocator: ^12.0.0
   google_maps_flutter: ^2.6.0
-
-  # Data Visualization & UI Enhancements
   fl_chart: ^0.68.0
   google_fonts: ^6.2.1
   flutter_spinkit: ^5.2.1
@@ -39,9 +31,18 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: Fredoka
+      fonts:
+        - asset: assets/fonts/Fredoka-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Fredoka-Regular.ttf
+          weight: 400
 
 flutter_launcher_icons:
   android: "ic_launcher"
   ios: true
   image_path: "assets/images/app_icon.png"
   min_sdk_android: 23
+  adaptive_icon_background: "#1A73E8"
+  adaptive_icon_foreground: "assets/images/app_icon_foreground.png"
