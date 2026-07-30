@@ -36,6 +36,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '648842993184',
     projectId: 'do-you-63ac5',
     storageBucket: 'do-you-63ac5.firebasestorage.app',
+    databaseURL: 'https://do-you-63ac5-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
